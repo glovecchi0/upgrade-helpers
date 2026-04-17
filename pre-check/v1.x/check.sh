@@ -9,7 +9,6 @@ usage() {
  echo " -y,     Assume 'y' to all answers and continue without asking."
 }
 
-
 while getopts "hvyl:" flag; do
  case $flag in
    h) # Handle the -h flag
@@ -40,7 +39,6 @@ done
 check_failed=0
 failed_check_name=''
 
-
 record_fail()
 {
     check_failed=$((check_failed+1))
@@ -69,7 +67,6 @@ log_info()
     echo -e "${1}"
 }
 
-
 HARVESTER_CLUSTER_VERSION=$(kubectl get settings.harvesterhci.io server-version -o json | jq -r '.value')
 echo "Upgrading from version $HARVESTER_CLUSTER_VERSION"
 
@@ -79,7 +76,6 @@ if [[ -z "$HARVESTER_CLUSTER_VERSION" ]]; then
     echo -e "\n==============================\n"
     return
 fi
-
 
 # Function necessary for version 1.4 of harvester cluster currently...
 # We should check if the Longhorn node has the EvictionRequested flag. If setted to true, will cause a Race Condition.
@@ -223,15 +219,11 @@ check_nodes()
         record_fail "Node-Status"
     fi
 
-
     # If version is 1.4.x, validate the Longhorn Eviction Requested status
     if [[ $HARVESTER_CLUSTER_VERSION =~ ^v(1.4)\..* ]]; then
         check_longhorn_eviction_status
     fi
-
-
 }
-
 
 check_cluster()
 {
@@ -712,7 +704,6 @@ check_virtual_machines_live_migration()
     log_info "Virtual Machines Test: Pass"
     echo -e "\n==============================\n"
 }
-
 
 check_log_file
 

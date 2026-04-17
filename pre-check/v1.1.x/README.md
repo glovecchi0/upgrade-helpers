@@ -30,18 +30,29 @@ We have developed a script to assist in verifying if a cluster is eligible for a
     All nodes are ready.
     >>> Check the CAPI cluster is provisioned...
     The CAPI cluster is provisioned.
+    >>> Check CAPI cluster is not paused...
+    CAPI cluster is not paused.
+    >>> Check the CAPI machines count...
+    CAPI machine count is equal to node count.
     >>> Check the CAPI machines are running...
     The CAPI machines are provisioned.
     >>> Check Longhorn volumes...
-    All volumes are healthy.
+    Skip checking for single node cluster.
     >>> Check stale Longhorn volumes...
-    Checking volume longhorn-system/pvc-c664716b-9e3a-4693-a91e-14ede2afb0cd...
-    Checking volume longhorn-system/pvc-ff113f82-702e-46ba-9c0c-bd11ece4ac33...
     There is no stale Longhorn volume.
     >>> Check error pods...
     All pods are OK.
-    All nodes have more than 30GB free space.
-    
+    Error from server (NotFound): services "rancher-monitoring-prometheus" not found
+    Error: no matches found
+    Prometheus service not found. Skipping free space check.
+    >>> Check control plane certificates...
+    >>> Checking kube-controller-manager certificate...
+    Certificate will not expire
+    kube-controller-manager certificate expires in 364 days (Apr 17 10:07:51 2027 GMT)
+    >>> Checking kube-scheduler certificate...
+    Certificate will not expire
+    kube-scheduler certificate expires in 364 days (Apr 17 10:07:51 2027 GMT)
+
     All checks pass.
     ```
 
@@ -51,4 +62,3 @@ We have developed a script to assist in verifying if a cluster is eligible for a
 ### Check time is in sync on every node.
 
 If there is no NTP server configured, please log in to each node and check the time is in sync (with `date` command).
-

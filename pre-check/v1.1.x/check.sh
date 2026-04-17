@@ -7,7 +7,6 @@ record_fail()
     check_failed=$((check_failed+1))
 }
 
-
 check_bundles()
 {
     echo ">>> Check all bundles ready..."
@@ -306,6 +305,12 @@ check_error_pods()
 check_free_space()
 {
     prom_ip=$(kubectl get services/rancher-monitoring-prometheus -n cattle-monitoring-system -o yaml | yq -e '.spec.clusterIP')
+
+    if [ -z "$prom_ip" ] || [ "$prom_ip" == "null" ]; then
+        echo "Prometheus service not found. Skipping free space check."
+        return
+    fi
+
     result=$(curl -sg "http://$prom_ip:9090/api/v1/query?query=node_filesystem_avail_bytes{mountpoint=\"/usr/local\"}<32212254720" | jq '.data.result')
 
     length=$(echo "$result" | jq 'length')
@@ -320,6 +325,48 @@ check_free_space()
     record_fail
 }
 
+# https://github.com/rancher/rancher/issues/41125#issuecomment-1506620040
+check_cert()
+{
+    local name=$1
+    local cert=$2
+
+    echo ">>> Checking $name certificate..."
+
+    if [ ! -f "$cert" ]; then
+        echo "Certificate not found: $cert"
+        record_fail
+        return
+    fi
+
+    if ! openssl x509 -checkend 0 -noout -in "$cert"; then
+        echo "$name certificate is EXPIRED!"
+        record_fail
+        return
+    fi
+
+    end_date=$(openssl x509 -enddate -noout -in "$cert" | cut -d= -f2)
+    end_epoch=$(date -d "$end_date" +%s)
+    now_epoch=$(date +%s)
+
+    seconds_left=$((end_epoch - now_epoch))
+    days_left=$((seconds_left / 86400))
+
+    echo "$name certificate expires in $days_left days ($end_date)"
+
+    if [ $days_left -lt 7 ]; then
+        echo "WARNING: $name certificate expires in less than 7 days!"
+    fi
+}
+
+check_control_plane_certificates()
+{
+    echo ">>> Check control plane certificates..."
+
+    check_cert "kube-controller-manager" "/var/lib/rancher/rke2/server/tls/kube-controller-manager/kube-controller-manager.crt"
+    check_cert "kube-scheduler" "/var/lib/rancher/rke2/server/tls/kube-scheduler/kube-scheduler.crt"
+}
+
 check_bundles
 check_harvester_bundle
 check_nodes
@@ -330,6 +377,7 @@ check_volumes
 check_attached_volumes
 check_error_pods
 check_free_space
+check_control_plane_certificates
 
 if [ $check_failed -gt 0 ]; then
     echo ""
